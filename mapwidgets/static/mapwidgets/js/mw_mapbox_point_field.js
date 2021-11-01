@@ -1,22 +1,6 @@
 class DjangoMapboxPointFieldWidget extends DjangoMapWidgetBase {
   constructor(options) {
     super(options)
-    Object.assign(this, options);
-
-    console.log("Django Mapbox input field is go", options)
-
-    this.coordinatesOverlayToggleBtn.addEventListener("click", this.toggleCoordinatesOverlay);
-    this.coordinatesOverlayDoneBtn.addEventListener("click", this.handleCoordinatesOverlayDoneBtnClick);
-    this.coordinatesOverlayInputs.addEventListener("change", this.handleCoordinatesInputsChange);
-    this.addMarkerBtn.addEventListener("click", this.handleAddMarkerBtnClick);
-    this.myLocationBtn.addEventListener("click", this.handleMyLocationBtnClick);
-    this.deleteBtn.addEventListener("click", this.resetMap);
-
-    // if the the location field in a collapse on Django admin form, the map need to initialize again when the collapse open by user.
-    if (document.querySelector(this.wrapElemSelector).closest('.module.collapse')) {
-      // TODO: Fix this event listener
-      document.addEventListener('show.fieldset', this.initializeMap);
-    }
 
     // For the geocoding etc.
     mapboxgl.accessToken = this.mapOptions.access_token;
@@ -47,6 +31,17 @@ class DjangoMapboxPointFieldWidget extends DjangoMapWidgetBase {
     });
 
     this.geocoder.addTo(this.map)
+
+    this.geolocator = new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      showUserLocation: false,
+      trackUserLocation: false,
+      showUserHeading: false
+    })
+    this.geolocator.on('geolocate', postion => console.log(position, "this.updateLocationInput"))
+    this.map.addControl(this.geolocator)
 
     this.mapElement.dataset.mapbox_map = this.map
     this.mapElement.dataset.mapbox_map_widget = this

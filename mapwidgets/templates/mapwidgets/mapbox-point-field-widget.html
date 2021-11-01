@@ -19,7 +19,6 @@
                     </div>
                 </div>
 
-                <a class="mw-btn mw-btn-info mw-btn-my-location" >{% trans "Use My Location" %}</a>
                 <a class="mw-btn mw-btn-warning mw-btn-add-marker" >{% trans "Choose point on map" %}</a>
             {% endblock header %}
         </div>
@@ -56,8 +55,9 @@
         var locationInputID = "#{{ id }}";
 
         var mapWidgetOptions = {
-            locationInput: document.getElementById(locationInputID),
-            wrapElemSelector: wrapElemSelector,
+            locationInput: document.querySelector(locationInputID),
+            wrapElemSelector,
+            wrapElem,
             locationFieldValue: field_value,
             mapElement: document.getElementById(mapElemID),
             mapCenterLocationName: mapOptions.mapCenterLocationName,
@@ -66,8 +66,7 @@
             coordinatesOverlayDoneBtn: wrapElem.querySelector(".mw-btn-coordinates-done"),
             coordinatesOverlayInputs: wrapElem.querySelector(".mw-overlay-input"),
             coordinatesOverlay: wrapElem.querySelector(".mw-coordinates-overlay"),
-            myLocationBtn: wrapElem.querySelector(".mw-btn-my-location"),
-            mapOptions: mapOptions,
+            mapOptions,
             deleteBtn: wrapElem.querySelector(".mw-btn-delete"),
             addMarkerBtn: wrapElem.querySelector(".mw-btn-add-marker"),
             loaderOverlayElem: wrapElem.querySelector(".mw-loader-overlay"),

@@ -7,7 +7,6 @@ class DjangoMapWidgetBase {
     this.coordinatesOverlayDoneBtn.addEventListener("click", this.handleCoordinatesOverlayDoneBtnClick);
     this.coordinatesOverlayInputs.addEventListener("change", this.handleCoordinatesInputsChange);
     this.addMarkerBtn.addEventListener("click", this.handleAddMarkerBtnClick);
-    this.myLocationBtn.addEventListener("click", this.handleMyLocationBtnClick);
     this.deleteBtn.addEventListener("click", this.resetMap);
 
     // if the the location field in a collapse on Django admin form, the map need to initialize again when the collapse open by user.
@@ -135,18 +134,19 @@ class DjangoMapWidgetBase {
   }
 
   toggleCoordinatesOverlay() {
+    console.log("Toggling", this)
     this.coordinatesOverlayToggleBtn.classList.toggle("active");
-    this.wrapElemSelector.querySelector(".mw-coordinates-overlay").classList.toggle("hide");
+    this.wrapElem.querySelector(".mw-coordinates-overlay").classList.toggle("hide");
   }
 
   updateCoordinatesInputs(lat, lng) {
-    this.wrapElemSelector.querySelector(".mw-overlay-latitude").value = lat || ""
-    this.wrapElemSelector.querySelector(".mw-overlay-longitude").value = lng || ""
+    this.wrapElem.querySelector(".mw-overlay-latitude").value = lat || ""
+    this.wrapElem.querySelector(".mw-overlay-longitude").value = lng || ""
   }
 
   handleCoordinatesInputsChange(e) {
-    var lat = this.wrapElemSelector.querySelector(".mw-overlay-latitude").value = ""
-    var lng = this.wrapElemSelector.querySelector(".mw-overlay-longitude").value = ""
+    var lat = this.wrapElem.querySelector(".mw-overlay-latitude").value = ""
+    var lng = this.wrapElem.querySelector(".mw-overlay-longitude").value = ""
     if (lat && lng) {
       this.updateLocationInput(lat, lng);
       this.fitBoundMarker();
@@ -154,7 +154,7 @@ class DjangoMapWidgetBase {
   }
 
   handleCoordinatesOverlayDoneBtnClick() {
-    this.wrapElemSelector.querySelector(".mw-coordinates-overlay").addClass("hide");
+    this.wrapElem.querySelector(".mw-coordinates-overlay").addClass("hide");
     this.coordinatesOverlayToggleBtn.removeClass("active");
   }
 
