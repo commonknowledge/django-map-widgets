@@ -75,7 +75,7 @@ class GooglePointFieldWidget(BasePointFieldMapWidget):
 
         if not mw_settings.MINIFED:  # pragma: no cover
             js = js + [
-                'mapwidgets/js/jquery_init.js',
+                # 'mapwidgets/js/jquery_init.js',
                 'mapwidgets/js/jquery_class.js',
                 'mapwidgets/js/django_mw_base.js',
                 'mapwidgets/js/mw_google_point_field.js',
@@ -140,19 +140,9 @@ class MapboxPointFieldWidget(BasePointFieldMapWidget):
             "https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.js",
             "https://unpkg.com/@mapbox/mapbox-sdk/umd/mapbox-sdk.min.js",
             "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js",
+            'mapwidgets/js/django_mw_base.js',
+            'mapwidgets/js/mw_mapbox_point_field.js',
         ]
-
-        if not mw_settings.MINIFED:  # pragma: no cover
-            js = js + [
-                'mapwidgets/js/jquery_init.js',
-                'mapwidgets/js/jquery_class.js',
-                'mapwidgets/js/django_mw_base.js',
-                'mapwidgets/js/mw_mapbox_point_field.js',
-            ]
-        else:
-            js = js + [
-              'mapwidgets/js/mw_mapbox_point_field.min.js'
-            ]
 
         return forms.Media(js=js, css=css)
 
@@ -176,7 +166,6 @@ class MapboxPointFieldWidget(BasePointFieldMapWidget):
             longitude, latitude = value.coords
             field_value['lng'] = longitude
             field_value['lat'] = latitude
-
 
         extra_attrs = {
             'options': self.map_options(),
