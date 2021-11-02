@@ -9,15 +9,87 @@ Stimulus.register("pointfield", class extends Controller {
     'lng': Number,
     'lat': Number,
     'mapOptions': Object,
-    'field': Object
+    'field': Object,
   }
 
+  source = 'django'
+
   connect() {
-    this.syncValuesToInputs()
     this.setupMap()
-    this.updateMarkerPosition()
-    this.fitBoundMarker()
+    this.syncValuesToInputs()
+    this.zoomToMarker()
   }
+
+  /**
+   * State
+   */
+
+  lngValueChanged() { this.coordinatesChanged() }
+  latValueChanged() { this.coordinatesChanged() }
+  get hasCoords () { return !isNaN(this.lngValue) && !isNaN(this.latValue) }
+  get lngLatTuple() { return [this.lngValue, this.latValue] }
+  get lngLatObject() { return { lng: this.lngValue, lat: this.latValue } }
+
+  setState(lng, lat, place, source) {
+    this.lngValue = parseFloat(lng)
+    this.latValue = parseFloat(lat)
+    this.place = place
+    this.source = source
+  }
+
+  clear() {
+    this.lngValue = null
+    this.latValue = null
+    this.place = null
+    this.removeMarker()
+  }
+
+  coordinatesChanged() {
+    if (this.source !== 'inputs') {
+      this.syncValuesToInputs()
+    }
+    if (this.hasCoords) {
+      this.updateMarkerPosition()
+      if (!this.place) {
+        this.updateNameOfPlace()
+      }
+      if (this.source !== 'map') {
+        this.zoomToMarker()
+      }
+    } else {
+      this.clear()
+    }
+  }
+
+  updateNameOfPlace() {
+    this.mapboxSDK?.geocoding.reverseGeocode({
+      query: this.lngLatTuple
+    })
+      .send()
+      .then(response => {
+        const address = response?.body?.features?.[0];
+        this.geocoder.clear();
+        this.geocoder.setPlaceholder(address?.place_name || "Somewhere");
+      })
+  }
+
+  syncInputsToValues() {
+    this.setState(
+      this.lngTarget.value,
+      this.latTarget.value,
+      null,
+      'inputs'
+    )
+  }
+
+  syncValuesToInputs(lng = this.lngValue, lat = this.latValue) {
+    this.lngTarget.value = lng || ''
+    this.latTarget.value = lat || ''
+  }
+
+  /**
+   * Map
+   */
 
   setupMap() {
     mapboxgl.accessToken = this.mapOptionsValue.access_token;
@@ -48,10 +120,11 @@ Stimulus.register("pointfield", class extends Controller {
     })
 
     this.geocoder.on('result', place => {
-      this.setLngLat(
+      this.setState(
         place.result.geometry.coordinates[0],
         place.result.geometry.coordinates[1],
-        place.result
+        place.result,
+        'geocoder'
       )
     })
 
@@ -68,16 +141,25 @@ Stimulus.register("pointfield", class extends Controller {
       showUserHeading: false
     })
 
-    this.geolocator.on('geolocate', location => this.setLngLat(
-      location.coords.longitude,
-      location.coords.latitude
-    ))
+    this.geolocator.on('geolocate', location => {
+      this.setState(
+        location.coords.longitude,
+        location.coords.latitude,
+        null,
+        'geolocator'
+      )
+    })
 
     return this.geolocator
   }
 
   handleMapClick(e) {
-    this.setLngLat(e.lngLat.lng, e.lngLat.lat)
+    this.setState(
+      e.lngLat.lng,
+      e.lngLat.lat,
+      null,
+      'map'
+    )
   }
 
   addMarkerToMap(lng, lat) {
@@ -96,11 +178,10 @@ Stimulus.register("pointfield", class extends Controller {
     this.marker = undefined
   }
 
-  fitBoundMarker() {
+  zoomToMarker() {
     if (this.marker) {
       this.map?.flyTo({
-        center: this.marker.getLngLat(),
-        zoom: 14
+        center: this.marker.getLngLat()
       });
     }
   }
@@ -114,64 +195,11 @@ Stimulus.register("pointfield", class extends Controller {
 
   dragMarker() {
     const position = this.marker?.getLngLat()
-    this.setLngLat(position.lng, position.lat)
-  }
-
-  lngValueChanged() { this.coordinatesChanged() }
-  latValueChanged() { this.coordinatesChanged() }
-  get hasCoords () { return !isNaN(this.lngValue) && !isNaN(this.latValue) }
-
-  coordinatesChanged() {
-    this.syncValuesToInputs()
-    if (this.hasCoords) {
-      this.updateMarkerPosition()
-    } else {
-      this.clear()
-    }
-  }
-
-  setLngLat(lng, lat, place) {
-    if (!lng || !lat) {
-      this.clear()
-    } else {
-      this.lngValue = parseFloat(lng)
-      this.latValue = parseFloat(lat)
-      this.place = place
-      if (!this.place) {
-        this.updateNameOfPlace()
-      }
-    }
-  }
-
-  clear() {
-    this.removeMarker()
-    this.place = null
-    this.lngValue = null
-    this.latValue = null
-  }
-
-  get lngLatTuple() { return [this.lngValue, this.latValue] }
-  get lngLatObject() { return { lng: this.lngValue, lat: this.latValue } }
-
-  updateNameOfPlace() {
-    this.mapboxSDK.geocoding.reverseGeocode({
-      query: this.lngLatTuple
-    })
-      .send()
-      .then(response => {
-        const address = response?.body?.features?.[0];
-        this.geocoder.clear();
-        this.geocoder.setPlaceholder(address?.place_name || "Somewhere");
-      })
-  }
-
-  syncInputsToValues() {
-    this.lngValue = this.lngTarget.value
-    this.latValue = this.latTarget.value
-  }
-
-  syncValuesToInputs(lng = this.lngValue, lat = this.latValue) {
-    this.lngTarget.value = lng || ''
-    this.latTarget.value = lat || ''
+    this.setState(
+      position.lng,
+      position.lat,
+      null,
+      'map'
+    )
   }
 })
