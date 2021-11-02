@@ -1,12 +1,43 @@
-class DjangoMapboxPointFieldWidget extends DjangoMapWidgetBase {
-  constructor(options) {
-    super(options)
+import { Application, Controller } from "https://unpkg.com/@hotwired/stimulus/dist/stimulus.js"
 
-    // For the geocoding etc.
-    mapboxgl.accessToken = this.mapOptions.access_token;
+window.Stimulus = Application.start()
 
-    this.mapboxSDK = new mapboxSdk({ accessToken: this.mapOptions.access_token });
+Stimulus.register("pointfield", class extends Controller {
+  static targets = [ "lng", "lat", "map", "add", "remove"]
 
+  static values = {
+    'lng': Number,
+    'lat': Number,
+    'mapOptions': Object,
+    'field': Object
+  }
+
+  connect() {
+    this.syncValuesToInputs()
+    this.setupMap()
+    this.updateMarkerPosition()
+    this.fitBoundMarker()
+  }
+
+  setupMap() {
+    mapboxgl.accessToken = this.mapOptionsValue.access_token;
+
+    this.mapboxSDK = new mapboxSdk({ accessToken: this.mapOptionsValue.access_token });
+
+    this.map = new mapboxgl.Map({
+      container: this.mapTarget, // container ID
+      style: 'mapbox://styles/mapbox/streets-v11', // style URL
+      center: [this.lng || 0, this.lat || 0], // starting position [lng, lat]
+      zoom: 10 // starting zoom
+    });
+
+    this.map.on("click", this.handleMapClick.bind(this));
+
+    this.map.addControl(this.createGeocoder())
+    this.map.addControl(this.createGeolocator())
+  }
+
+  createGeocoder() {
     this.geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
       zoom: 13,
@@ -16,22 +47,18 @@ class DjangoMapboxPointFieldWidget extends DjangoMapWidgetBase {
       marker: false
     })
 
-    this.geocoder.on('result', (place) => this.handleAutoCompletePlaceChange(place.result))
+    this.geocoder.on('result', place => {
+      this.setLngLat(
+        place.result.geometry.coordinates[0],
+        place.result.geometry.coordinates[1],
+        place.result
+      )
+    })
 
-    this.initializeMap();
+    return this.geocoder
   }
 
-  initializeMap() {
-    var mapCenter = this.mapCenterLocation;
-    this.map = new mapboxgl.Map({
-      container: this.mapElement.id, // container ID
-      style: 'mapbox://styles/mapbox/streets-v11', // style URL
-      center: [mapCenter[1], mapCenter[0]], // starting position [lng, lat]
-      zoom: this.zoom // starting zoom
-    });
-
-    this.geocoder.addTo(this.map)
-
+  createGeolocator() {
     this.geolocator = new mapboxgl.GeolocateControl({
       positionOptions: {
         enableHighAccuracy: true
@@ -40,93 +67,111 @@ class DjangoMapboxPointFieldWidget extends DjangoMapWidgetBase {
       trackUserLocation: false,
       showUserHeading: false
     })
-    this.geolocator.on('geolocate', postion => console.log(position, "this.updateLocationInput"))
-    this.map.addControl(this.geolocator)
 
-    this.mapElement.dataset.mapbox_map = this.map
-    this.mapElement.dataset.mapbox_map_widget = this
+    this.geolocator.on('geolocate', location => this.setLngLat(
+      location.coords.longitude,
+      location.coords.latitude
+    ))
 
-    if (Object.getOwnPropertyNames(this.locationFieldValue).length === 0) {
-      this.updateLocationInput(this.locationFieldValue.lat, this.locationFieldValue.lng);
-      this.fitBoundMarker();
-    }
+    return this.geolocator
   }
 
-  addMarkerToMap(lat, lng) {
+  handleMapClick(e) {
+    this.setLngLat(e.lngLat.lng, e.lngLat.lat)
+  }
+
+  addMarkerToMap(lng, lat) {
+    if (!this.map) return
     this.removeMarker();
     this.marker = new mapboxgl.Marker()
       .setLngLat([parseFloat(lng), parseFloat(lat)])
       .setDraggable(true)
       .addTo(this.map);
-    this.marker.on("dragend", this.dragMarker);
+
+    this.marker.on("dragend", this.dragMarker.bind(this));
+  }
+
+  removeMarker() {
+    this.marker?.remove()
+    this.marker = undefined
   }
 
   fitBoundMarker() {
     if (this.marker) {
-      this.map.flyTo({
+      this.map?.flyTo({
         center: this.marker.getLngLat(),
         zoom: 14
       });
     }
   }
 
-  removeMarker(e) {
-    if (this.marker) {
-      this.marker.remove()
+  updateMarkerPosition() {
+    if (!this.marker) {
+      this.addMarkerToMap(...this.lngLatTuple)
     }
+    this.marker?.setLngLat(this.lngLatTuple)
   }
 
-  dragMarker(e) {
-    const position = this.marker.getLngLat()
-    this.updateLocationInput(position.lat, position.lng)
+  dragMarker() {
+    const position = this.marker?.getLngLat()
+    this.setLngLat(position.lng, position.lat)
   }
 
-  handleAddMarkerBtnClick(e) {
-    this.mapElement.classList.toggle("click");
-    this.addMarkerBtn.toggleClass("active");
-    if (this.addMarkerBtn.classList.contains("active")) {
-      this.map.on("click", this.handleMapClick);
+  lngValueChanged() { this.coordinatesChanged() }
+  latValueChanged() { this.coordinatesChanged() }
+  get hasCoords () { return !isNaN(this.lngValue) && !isNaN(this.latValue) }
+
+  coordinatesChanged() {
+    this.syncValuesToInputs()
+    if (this.hasCoords) {
+      this.updateMarkerPosition()
     } else {
-      this.map.off("click", this.handleMapClick);
+      this.clear()
     }
   }
 
-  handleMapClick(e) {
-    this.map.off("click", this.handleMapClick);
-    this.mapElement.classList.remove("click");
-    this.addMarkerBtn.classList.remove("active");
-    this.updateLocationInput(e.lngLat.lat, e.lngLat.lng)
+  setLngLat(lng, lat, place) {
+    if (!lng || !lat) {
+      this.clear()
+    } else {
+      this.lngValue = parseFloat(lng)
+      this.latValue = parseFloat(lat)
+      this.place = place
+      if (!this.place) {
+        this.updateNameOfPlace()
+      }
+    }
   }
 
-  callPlaceTriggerHandler(lat, lng, place) {
-    if (place === undefined) {
-      this.mapboxSDK.geocoding.reverseGeocode({
-        query: [parseFloat(lng), parseFloat(lat)]
+  clear() {
+    this.removeMarker()
+    this.place = null
+    this.lngValue = null
+    this.latValue = null
+  }
+
+  get lngLatTuple() { return [this.lngValue, this.latValue] }
+  get lngLatObject() { return { lng: this.lngValue, lat: this.latValue } }
+
+  updateNameOfPlace() {
+    this.mapboxSDK.geocoding.reverseGeocode({
+      query: this.lngLatTuple
+    })
+      .send()
+      .then(response => {
+        const address = response?.body?.features?.[0];
+        this.geocoder.clear();
+        this.geocoder.setPlaceholder(address?.place_name || "Somewhere");
       })
-        .send()
-        .then(response => {
-          const address = response?.body?.features?.[0];
-          this.geocoder.clear();
-          this.geocoder.setPlaceholder(address?.place_name || "Somewhere");
-          document.dispatchEvent(new CustomEvent(this.placeChangedTriggerNameSpace,
-            [address, lat, lng, this.wrapElemSelector, this.locationInput]
-          ))
-        })
-    } else {  // user entered an address
-      document.dispatchEvent(new CustomEvent(this.placeChangedTriggerNameSpace,
-        [place, lat, lng, this.wrapElemSelector, this.locationInput]
-      ))
-    }
   }
 
-  handleAutoCompletePlaceChange(place) {
-    if (!place.geometry) {
-      // User entered the name of a Place that was not suggested and
-      // pressed the Enter key, or the Place Details request failed.
-      return;
-    }
-    var [lng, lat] = place.geometry.coordinates;
-    this.updateLocationInput(lat, lng, place);
-    this.fitBoundMarker()
+  syncInputsToValues() {
+    this.lngValue = this.lngTarget.value
+    this.latValue = this.latTarget.value
   }
-}
+
+  syncValuesToInputs(lng = this.lngValue, lat = this.latValue) {
+    this.lngTarget.value = lng || ''
+    this.latTarget.value = lat || ''
+  }
+})

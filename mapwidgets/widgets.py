@@ -130,7 +130,7 @@ class MapboxPointFieldWidget(BasePointFieldMapWidget):
     def media(self):
         css = {
             'all': [
-                minify_if_not_debug('mapwidgets/css/map_widgets{}.css'),
+                # minify_if_not_debug('mapwidgets/css/map_widgets{}.css'),
                 "https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.css",
                 "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css",
             ]
@@ -140,8 +140,8 @@ class MapboxPointFieldWidget(BasePointFieldMapWidget):
             "https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.js",
             "https://unpkg.com/@mapbox/mapbox-sdk/umd/mapbox-sdk.min.js",
             "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js",
-            'mapwidgets/js/django_mw_base.js',
-            'mapwidgets/js/mw_mapbox_point_field.js',
+            # 'mapwidgets/js/django_mw_base.js',
+            # ('mapwidgets/js/mw_mapbox_point_field.js', { "type": "module" }),
         ]
 
         return forms.Media(js=js, css=css)
@@ -169,7 +169,9 @@ class MapboxPointFieldWidget(BasePointFieldMapWidget):
 
         extra_attrs = {
             'options': self.map_options(),
-            'field_value': json.dumps(field_value)
+            'field_value': json.dumps(field_value),
+            'lat': field_value['lat'],
+            'lng': field_value['lng'],
         }
         attrs.update(extra_attrs)
         self.as_super = super(MapboxPointFieldWidget, self)
