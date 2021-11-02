@@ -75,7 +75,7 @@ class GooglePointFieldWidget(BasePointFieldMapWidget):
 
         if not mw_settings.MINIFED:  # pragma: no cover
             js = js + [
-                # 'mapwidgets/js/jquery_init.js',
+                'mapwidgets/js/jquery_init.js',
                 'mapwidgets/js/jquery_class.js',
                 'mapwidgets/js/django_mw_base.js',
                 'mapwidgets/js/mw_google_point_field.js',
@@ -130,7 +130,6 @@ class MapboxPointFieldWidget(BasePointFieldMapWidget):
     def media(self):
         css = {
             'all': [
-                # minify_if_not_debug('mapwidgets/css/map_widgets{}.css'),
                 "https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.css",
                 "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css",
             ]
@@ -140,8 +139,6 @@ class MapboxPointFieldWidget(BasePointFieldMapWidget):
             "https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.js",
             "https://unpkg.com/@mapbox/mapbox-sdk/umd/mapbox-sdk.min.js",
             "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js",
-            # 'mapwidgets/js/django_mw_base.js',
-            # ('mapwidgets/js/mw_mapbox_point_field.js', { "type": "module" }),
         ]
 
         return forms.Media(js=js, css=css)

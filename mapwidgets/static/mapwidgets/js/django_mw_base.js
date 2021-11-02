@@ -1,214 +1,215 @@
-class DjangoMapWidgetBase {
+(function($) {
+	DjangoMapWidgetBase = $.Class.extend({
 
-  constructor(options) {
-    Object.assign(this, options);
+		init: function(options){
+			$.extend(this, options);
+			this.coordinatesOverlayToggleBtn.on("click", this.toggleCoordinatesOverlay.bind(this));
+			this.coordinatesOverlayDoneBtn.on("click", this.handleCoordinatesOverlayDoneBtnClick.bind(this));
+			this.coordinatesOverlayInputs.on("change", this.handleCoordinatesInputsChange.bind(this));
+			this.addMarkerBtn.on("click", this.handleAddMarkerBtnClick.bind(this));
+			this.myLocationBtn.on("click", this.handleMyLocationBtnClick.bind(this));
+			this.deleteBtn.on("click", this.resetMap.bind(this));
 
-    this.coordinatesOverlayToggleBtn.addEventListener("click", this.toggleCoordinatesOverlay);
-    this.coordinatesOverlayDoneBtn.addEventListener("click", this.handleCoordinatesOverlayDoneBtnClick);
-    this.coordinatesOverlayInputs.addEventListener("change", this.handleCoordinatesInputsChange);
-    this.addMarkerBtn.addEventListener("click", this.handleAddMarkerBtnClick);
-    this.deleteBtn.addEventListener("click", this.resetMap);
+			// if the the location field in a collapse on Django admin form, the map need to initialize again when the collapse open by user.
+			if ($(this.wrapElemSelector).closest('.module.collapse').length){
+				$(document).on('show.fieldset', this.initializeMap.bind(this));
+			}
 
-    // if the the location field in a collapse on Django admin form, the map need to initialize again when the collapse open by user.
-    if (document.querySelector(this.wrapElemSelector).closest('.module.collapse')) {
-      // TODO: Fix this event listener
-      document.addEventListener('show.fieldset', this.initializeMap);
-    }
+			var autocomplete = new google.maps.places.Autocomplete(this.addressAutoCompleteInput, this.GooglePlaceAutocompleteOptions);
+			google.maps.event.addListener(autocomplete, 'place_changed', this.handleAutoCompletePlaceChange.bind(this, autocomplete));
+			google.maps.event.addDomListener(this.addressAutoCompleteInput, 'keydown', this.handleAutoCompleteInputKeyDown.bind(this));
+			this.geocoder = new google.maps.Geocoder;
+			this.initializeMap.bind(this)();
+		},
 
-    // var autocomplete = new google.maps.places.Autocomplete(this.addressAutoCompleteInput, this.GooglePlaceAutocompleteOptions);
-    // google.maps.event.addListener(autocomplete, 'place_changed', this.handleAutoCompletePlaceChange.bind(this, autocomplete));
-    // google.maps.event.addDomListener(this.addressAutoCompleteInput, 'keydown', this.handleAutoCompleteInputKeyDown);
-    // this.geocoder = new google.maps.Geocoder;
-    // this.initializeMap();
-  }
+		initializeMap: function(){
+			console.warn("Implement initializeMap method.");
+		},
 
-  initializeMap() {
-    console.warn("Implement initializeMap method.");
-  }
+		updateMap: function(lat, lng){
+			console.warn("Implement updateMap method.");
+		},
 
-  updateMap(lat, lng) {
-    console.warn("Implement updateMap method.");
-  }
+		addMarkerToMap: function(lat, lng){
+			console.warn("Implement this method for your map js library.");
+		},
 
-  addMarkerToMap(lat, lng) {
-    console.warn("Implement this method for your map js library.");
-  }
+		fitBoundMarker: function(){
+			console.warn("Implement this method for your map js library.");
+		},
 
-  fitBoundMarker() {
-    console.warn("Implement this method for your map js library.");
-  }
+		removeMarker: function(){
+			console.warn("Implement this method for your map js library.");
+		},
 
-  removeMarker() {
-    console.warn("Implement this method for your map js library.");
-  }
+		dragMarker: function(e){
+			console.warn("Implement dragMarker method.");
+		},
 
-  dragMarker(e) {
-    console.warn("Implement dragMarker method.");
-  }
+		handleMapClick: function(e){
+			console.warn("Implement handleMapClick method.");
+		},
 
-  handleMapClick(e) {
-    console.warn("Implement handleMapClick method.");
-  }
+		handleAddMarkerBtnClick: function(e){
+			console.warn("Implement handleAddMarkerBtnClick method.");
+		},
 
-  handleAddMarkerBtnClick(e) {
-    console.warn("Implement handleAddMarkerBtnClick method.");
-  }
+		isInt : function(value) {
+			return !isNaN(value) &&
+				parseInt(Number(value)) === value &&
+				!isNaN(parseInt(value, 10));
+		},
 
-  isInt(value) {
-    return !isNaN(value) &&
-      parseInt(Number(value)) === value &&
-      !isNaN(parseInt(value, 10));
-  }
+		getLocationValues: function(){
+			var latlng = this.locationInput.val().split(' ');
+			var lat = latlng[2].replace(/[\(\)]/g, '');
+			var lng = latlng[1].replace(/[\(\)]/g, '');
+			return {
+				"lat": lat,
+				"lng": lng
+			}
+		},
 
-  getLocationValues() {
-    var latlng = this.locationInput.value.split(' ')
-    var lat = latlng[2].replace(/[\(\)]/g, '');
-    var lng = latlng[1].replace(/[\(\)]/g, '');
-    return {
-      "lat": lat,
-      "lng": lng
-    }
-  }
+		callPlaceTriggerHandler: function (lat, lng, place) {
+			if (place === undefined){
+                var latlng = {lat: parseFloat(lat), lng: parseFloat(lng)};
+				this.geocoder.geocode({'location' : latlng}, function(results, status) {
+                    if (status === google.maps.GeocoderStatus.OK) {
+	                    var placeObj = results[0] || {};
+	                    $(this.addressAutoCompleteInput).val(placeObj.formatted_address || "");
+	                    $(document).trigger(this.placeChangedTriggerNameSpace,
+		                    [placeObj, lat, lng, this.wrapElemSelector, this.locationInput]
+	                    );
+                    }
+                }.bind(this));
+			}else{  // user entered an address
+				$(document).trigger(this.placeChangedTriggerNameSpace,
+					[place, lat, lng, this.wrapElemSelector, this.locationInput]
+				);
+			}
+		},
 
-  callPlaceTriggerHandler(lat, lng, place) {
-    if (place === undefined) {
-      var latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
-      this.geocoder.geocode({ 'location': latlng }, function (results, status) {
-        if (status === google.maps.GeocoderStatus.OK) {
-          var placeObj = results[0] || {};
-          this.addressAutoCompleteInput.value = placeObj.formatted_address || ""
-          document.dispatchEvent(new CustomEvent(this.placeChangedTriggerNameSpace,
-            [placeObj, lat, lng, this.wrapElemSelector, this.locationInput]
-          ))
-        }
-      });
-    } else {  // user entered an address
-      document.dispatchEvent(new CustomEvent(this.placeChangedTriggerNameSpace,
-        [place, lat, lng, this.wrapElemSelector, this.locationInput]
-      ))
-    }
-  }
+		updateLocationInput: function(lat, lng, place){
+			var location_input_val = "POINT (" + lng + " " + lat + ")";
+			this.locationInput.val(location_input_val);
+			this.updateCoordinatesInputs(lat, lng);
+			this.addMarkerToMap(lat, lng);
+			if ($.isEmptyObject(this.locationFieldValue)){
+				$(document).trigger(this.markerCreateTriggerNameSpace,
+					[place, lat, lng, this.wrapElemSelector, this.locationInput]
+				);
+			}else{
+				$(document).trigger(this.markerChangeTriggerNameSpace,
+					[place, lat, lng, this.wrapElemSelector, this.locationInput]
+				);
+			}
 
-  updateLocationInput(lat, lng, place) {
-    var location_input_val = "POINT (" + lng + " " + lat + ")";
-    this.locationInput.value = location_input_val
-    this.updateCoordinatesInputs(lat, lng);
-    this.addMarkerToMap(lat, lng);
-    if (Object.getOwnPropertyNames(this.locationFieldValue).length === 0) {
-      document.dispatchEvent(new CustomEvent(this.markerCreateTriggerNameSpace,
-        [place, lat, lng, this.wrapElemSelector, this.locationInput]
-      ))
-    } else {
-      document.dispatchEvent(new CustomEvent(this.markerChangeTriggerNameSpace,
-        [place, lat, lng, this.wrapElemSelector, this.locationInput]
-      ))
-    }
+			this.callPlaceTriggerHandler(lat, lng, place);
+			this.locationFieldValue = {
+				"lng": lng,
+				"lat": lat
+			};
+			this.deleteBtn.removeClass("mw-btn-default disabled").addClass("mw-btn-danger");
+		},
 
-    this.callPlaceTriggerHandler(lat, lng, place);
-    this.locationFieldValue = {
-      "lng": lng,
-      "lat": lat
-    };
-    this.deleteBtn.removeClass("mw-btn-default disabled").addClass("mw-btn-danger");
-  }
+		resetMap: function(){
+			if (!$.isEmptyObject(this.locationFieldValue)) {
+				this.hideOverlay();
+				this.locationInput.val("");
+				this.coordinatesOverlayInputs.val("");
+				$(this.addressAutoCompleteInput).val("");
+				this.addMarkerBtn.removeClass("active");
+				this.removeMarker();
+				this.deleteBtn.removeClass("mw-btn-danger").addClass("mw-btn-default disabled");
+				$(document).trigger(this.markerDeleteTriggerNameSpace,
+					[
+						this.locationFieldValue.lat,
+						this.locationFieldValue.lng,
+						this.wrapElemSelector,
+						this.locationInput
+					]
+				);
+				this.locationFieldValue = null;
+			}
+		},
 
-  resetMap() {
-    if (Object.getOwnPropertyNames(this.locationFieldValue).length === 0) {
-      this.hideOverlay();
-      this.locationInput.value = ""
-      this.coordinatesOverlayInputs.value = ""
-      this.addressAutoCompleteInput.value = ""
-      this.addMarkerBtn.removeClass("active");
-      this.removeMarker();
-      this.deleteBtn.removeClass("mw-btn-danger").addClass("mw-btn-default disabled");
-      document.dispatchEvent(new CustomEvent(this.markerDeleteTriggerNameSpace,
-        [
-          this.locationFieldValue.lat,
-          this.locationFieldValue.lng,
-          this.wrapElemSelector,
-          this.locationInput
-        ]
-      ))
-      this.locationFieldValue = null;
-    }
-  }
+		toggleCoordinatesOverlay: function(){
+			this.coordinatesOverlayToggleBtn.toggleClass("active");
+			$(".mw-coordinates-overlay", this.wrapElemSelector).toggleClass("hide");
+		},
 
-  toggleCoordinatesOverlay() {
-    console.log("Toggling", this)
-    this.coordinatesOverlayToggleBtn.classList.toggle("active");
-    this.wrapElem.querySelector(".mw-coordinates-overlay").classList.toggle("hide");
-  }
+		updateCoordinatesInputs: function(lat, lng){
+			$(".mw-overlay-latitude", this.wrapElemSelector).val(lat || "");
+			$(".mw-overlay-longitude", this.wrapElemSelector).val(lng || "");
+		},
 
-  updateCoordinatesInputs(lat, lng) {
-    this.wrapElem.querySelector(".mw-overlay-latitude").value = lat || ""
-    this.wrapElem.querySelector(".mw-overlay-longitude").value = lng || ""
-  }
+		handleCoordinatesInputsChange: function (e) {
+			var lat = $(".mw-overlay-latitude", this.wrapElemSelector).val();
+			var lng = $(".mw-overlay-longitude", this.wrapElemSelector).val();
+			if (lat && lng){
+				this.updateLocationInput(lat, lng);
+				this.fitBoundMarker();
+			}
+		},
 
-  handleCoordinatesInputsChange(e) {
-    var lat = this.wrapElem.querySelector(".mw-overlay-latitude").value = ""
-    var lng = this.wrapElem.querySelector(".mw-overlay-longitude").value = ""
-    if (lat && lng) {
-      this.updateLocationInput(lat, lng);
-      this.fitBoundMarker();
-    }
-  }
+		handleCoordinatesOverlayDoneBtnClick: function(){
+			$(".mw-coordinates-overlay", this.wrapElemSelector).addClass("hide");
+			this.coordinatesOverlayToggleBtn.removeClass("active");
+		},
 
-  handleCoordinatesOverlayDoneBtnClick() {
-    this.wrapElem.querySelector(".mw-coordinates-overlay").addClass("hide");
-    this.coordinatesOverlayToggleBtn.removeClass("active");
-  }
+		handleMyLocationBtnClick: function(){
+			this.showOverlay();
+			if(navigator.geolocation){
+				navigator.geolocation.getCurrentPosition(
+					this.handleCurrentPosition.bind(this),
+					this.handlecurrentPositionError.bind(this)
+				);
+			}else{
+				this.handlecurrentPositionError();
+			}
 
-  handleMyLocationBtnClick() {
-    this.showOverlay();
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        this.handleCurrentPosition,
-        this.handlecurrentPositionError
-      );
-    } else {
-      this.handlecurrentPositionError();
-    }
+		},
 
-  }
+		handleCurrentPosition: function(location){
+			this.updateLocationInput(location.coords.latitude, location.coords.longitude);
+			this.hideOverlay();
+			this.fitBoundMarker();
+		},
 
-  handleCurrentPosition(location) {
-    this.updateLocationInput(location.coords.latitude, location.coords.longitude);
-    this.hideOverlay();
-    this.fitBoundMarker();
-  }
+		handlecurrentPositionError: function(){
+			this.hideOverlay();
+			alert("Your location could not be found.");
+		},
 
-  handlecurrentPositionError() {
-    this.hideOverlay();
-    alert("Your location could not be found.");
-  }
+		handleAutoCompleteInputKeyDown: function (e) {
+			var keyCode = e.keyCode || e.which;
+			if (keyCode === 13){  // pressed enter key
+				e.preventDefault();
+				return false;
+			}
+		},
 
-  handleAutoCompleteInputKeyDown(e) {
-    var keyCode = e.keyCode || e.which;
-    if (keyCode === 13) {  // pressed enter key
-      e.preventDefault();
-      return false;
-    }
-  }
-
-  handleAutoCompletePlaceChange(autocomplete) {
-    var place = autocomplete.getPlace();
-    if (!place.geometry) {
-      // User entered the name of a Place that was not suggested and
-      // pressed the Enter key, or the Place Details request failed.
-      return;
-    }
-    var lat = place.geometry.location.lat();
-    var lng = place.geometry.location.lng();
-    this.updateLocationInput(lat, lng, place);
-    this.fitBoundMarker()
-  }
+		handleAutoCompletePlaceChange: function (autocomplete) {
+			var place = autocomplete.getPlace();
+			if (!place.geometry) {
+				// User entered the name of a Place that was not suggested and
+				// pressed the Enter key, or the Place Details request failed.
+				return;
+			}
+			var lat = place.geometry.location.lat();
+			var lng = place.geometry.location.lng();
+			this.updateLocationInput(lat, lng, place);
+			this.fitBoundMarker()
+		},
 
 
-  showOverlay() {
-    this.loaderOverlayElem.removeClass("hide")
-  }
+		showOverlay: function(){
+			this.loaderOverlayElem.removeClass("hide")
+		},
 
-  hideOverlay() {
-    this.loaderOverlayElem.addClass("hide")
-  }
-}
+		hideOverlay: function(){
+			this.loaderOverlayElem.addClass("hide")
+		}
+	});
+
+})(mapWidgets.jQuery);
