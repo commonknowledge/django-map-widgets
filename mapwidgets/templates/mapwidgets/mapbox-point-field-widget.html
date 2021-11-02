@@ -1,0 +1,75 @@
+{% load wagtailadmin_tags i18n static %}
+
+<div
+  id="{{ name }}-mw-wrap"
+  data-controller="pointfield"
+  data-pointfield-map-options-value="{{ options }}"
+  data-pointfield-field-value="{{ field_value }}"
+  data-pointfield-lng-value="{{ lng }}"
+  data-pointfield-lat-value="{{ lat }}"
+>
+  <p>Directly enter new coordinates, click the map, or drag the map marker.</p>
+
+  <div>
+    <div class="field">
+      <label for="{{ name }}-mw-overlay-longitude">
+        {% trans "Longitude:" %}
+      </label>
+      <div class="field-content">
+        <div class="input">
+          <input
+            data-pointfield-target="lng"
+            type="number"
+            id="{{ name }}-mw-overlay-longitude"
+            placeholder="{% trans 'Number between -180 and 180' %}"
+            min="-180"
+            max="180"
+            data-action='change->pointfield#syncInputsToValues'
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="{{ name }}-mw-overlay-latitude">
+        {% trans "Latitude:" %}
+      </label>
+      <div class="field-content">
+        <div class="input">
+          <input
+            data-pointfield-target="lat"
+            type="number"
+            id="{{ name }}-mw-overlay-latitude"
+            placeholder="{% trans 'Number between -90 and 90' %}"
+            min="-90"
+            max="90"
+            data-action='change->pointfield#syncInputsToValues'
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a
+    class="button button-secondary no"
+    data-pointfield-target="remove"
+    data-action="click->pointfield#reset"
+    >Delete selection</a
+  >
+
+  <div
+    data-pointfield-target="map"
+    id="{{ name }}-map-elem"
+    style="height: 400px"
+  ></div>
+
+  <div style="display: none" class="hide">
+    <textarea id="{{ id }}" name="{{ name }}" data-pointfield-target="djangoFormInput">{{ serialized }}</textarea>
+    {% block extra_input %} {% endblock extra_input %}
+  </div>
+
+  <script
+    src="{% static 'mapwidgets/js/mw_mapbox_point_field.js' %}"
+    type="module"
+  ></script>
+</div>
