@@ -170,8 +170,8 @@ class MapboxPointFieldWidget(BasePointFieldMapWidget):
         extra_attrs = {
             'options': self.map_options(),
             'field_value': json.dumps(field_value),
-            'lat': field_value['lat'],
-            'lng': field_value['lng'],
+            'lat': field_value.get('lat', None),
+            'lng': field_value.get('lng', None),
         }
         attrs.update(extra_attrs)
         self.as_super = super(MapboxPointFieldWidget, self)

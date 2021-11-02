@@ -5,12 +5,12 @@
   data-controller="pointfield"
   data-pointfield-map-options-value="{{ options }}"
   data-pointfield-field-value="{{ field_value }}"
-  data-pointfield-lat-value="{{ lat }}"
   data-pointfield-lng-value="{{ lng }}"
+  data-pointfield-lat-value="{{ lat }}"
 >
   <p>Directly enter new coordinates, click the map, or drag the map marker.</p>
 
-  <div data-action="keypress->pointfield#syncInputsToValues">
+  <div>
     <div class="field">
       <label for="{{ name }}-mw-overlay-longitude">
         {% trans "Longitude:" %}
@@ -53,8 +53,8 @@
   <a
     class="button button-secondary no"
     data-pointfield-target="remove"
-    data-action="click->pointfield#clear"
-    >Clear point</a
+    data-action="click->pointfield#reset"
+    >Delete selection</a
   >
 
   <div
@@ -64,7 +64,7 @@
   ></div>
 
   <div style="display: none" class="hide">
-    <textarea id="{{ id }}" name="{{ name }}">{{ serialized }}</textarea>
+    <textarea id="{{ id }}" name="{{ name }}" data-pointfield-target="djangoFormInput">{{ serialized }}</textarea>
     {% block extra_input %} {% endblock extra_input %}
   </div>
 

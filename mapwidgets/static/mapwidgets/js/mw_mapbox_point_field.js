@@ -3,29 +3,30 @@ import { Application, Controller } from "https://unpkg.com/@hotwired/stimulus/di
 window.Stimulus = Application.start()
 
 Stimulus.register("pointfield", class extends Controller {
-  static targets = [ "lng", "lat", "map", "add", "remove"]
+  static targets = [ "lng", "lat", "map", "add", "remove", "djangoFormInput"]
 
   static values = {
     'lng': Number,
     'lat': Number,
     'mapOptions': Object,
     'field': Object,
+    'source': String,
+    'place': Object
   }
 
   source = 'django'
 
   connect() {
     this.setupMap()
-    this.syncValuesToInputs()
-    this.zoomToMarker()
+    this.onStateChange()
   }
 
   /**
    * State
    */
 
-  lngValueChanged() { this.coordinatesChanged() }
-  latValueChanged() { this.coordinatesChanged() }
+  lngValueChanged() { this.onStateChange() }
+  latValueChanged() { this.onStateChange() }
   get hasCoords () { return !isNaN(this.lngValue) && !isNaN(this.latValue) }
   get lngLatTuple() { return [this.lngValue, this.latValue] }
   get lngLatObject() { return { lng: this.lngValue, lat: this.latValue } }
@@ -37,16 +38,16 @@ Stimulus.register("pointfield", class extends Controller {
     this.source = source
   }
 
-  clear() {
+  reset() {
     this.lngValue = null
     this.latValue = null
     this.place = null
     this.removeMarker()
   }
 
-  coordinatesChanged() {
+  onStateChange() {
     if (this.source !== 'inputs') {
-      this.syncValuesToInputs()
+      this.updateLngLatInputs()
     }
     if (this.hasCoords) {
       this.updateMarkerPosition()
@@ -57,7 +58,16 @@ Stimulus.register("pointfield", class extends Controller {
         this.zoomToMarker()
       }
     } else {
-      this.clear()
+      this.reset()
+    }
+    this.serializeToDjangoFormInput()
+  }
+
+  serializeToDjangoFormInput() {
+    if (this.hasCoords) {
+      this.djangoFormInputTarget.innerHTML = 'POINT (' + this.lngValue + ' ' + this.latValue + ')'
+    } else {
+      this.djangoFormInputTarget.innerHTML = ''
     }
   }
 
@@ -82,7 +92,7 @@ Stimulus.register("pointfield", class extends Controller {
     )
   }
 
-  syncValuesToInputs(lng = this.lngValue, lat = this.latValue) {
+  updateLngLatInputs(lng = this.lngValue, lat = this.latValue) {
     this.lngTarget.value = lng || ''
     this.latTarget.value = lat || ''
   }
@@ -119,11 +129,11 @@ Stimulus.register("pointfield", class extends Controller {
       marker: false
     })
 
-    this.geocoder.on('result', place => {
+    this.geocoder.on('result', ({ result }) => {
       this.setState(
-        place.result.geometry.coordinates[0],
-        place.result.geometry.coordinates[1],
-        place.result,
+        result.geometry.coordinates[0],
+        result.geometry.coordinates[1],
+        result,
         'geocoder'
       )
     })
@@ -141,10 +151,10 @@ Stimulus.register("pointfield", class extends Controller {
       showUserHeading: false
     })
 
-    this.geolocator.on('geolocate', location => {
+    this.geolocator.on('geolocate', ({ coords }) => {
       this.setState(
-        location.coords.longitude,
-        location.coords.latitude,
+        coords.longitude,
+        coords.latitude,
         null,
         'geolocator'
       )
@@ -194,10 +204,10 @@ Stimulus.register("pointfield", class extends Controller {
   }
 
   dragMarker() {
-    const position = this.marker?.getLngLat()
+    const { lng, lat } = this.marker?.getLngLat()
     this.setState(
-      position.lng,
-      position.lat,
+      lng,
+      lat,
       null,
       'map'
     )
