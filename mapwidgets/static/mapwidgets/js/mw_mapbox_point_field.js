@@ -113,7 +113,14 @@ Stimulus.register("pointfield", class extends Controller {
       zoom: 10 // starting zoom
     });
 
-    this.map.on("click", this.handleMapClick.bind(this));
+    this.map.on("click", ({ lngLat }) => {
+      this.setState(
+        lngLat.lng,
+        lngLat.lat,
+        null,
+        'map'
+      )
+    });
 
     this.map.addControl(this.createGeocoder())
     this.map.addControl(this.createGeolocator())
@@ -161,15 +168,6 @@ Stimulus.register("pointfield", class extends Controller {
     })
 
     return this.geolocator
-  }
-
-  handleMapClick(e) {
-    this.setState(
-      e.lngLat.lng,
-      e.lngLat.lat,
-      null,
-      'map'
-    )
   }
 
   addMarkerToMap(lng, lat) {
