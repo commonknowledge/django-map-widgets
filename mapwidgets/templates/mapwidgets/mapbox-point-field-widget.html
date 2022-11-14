@@ -7,11 +7,12 @@
   data-pointfield-field-value="{{ field_value }}"
   data-pointfield-lng-value="{{ lng }}"
   data-pointfield-lat-value="{{ lat }}"
+  class="w-panel__wrapper"
 >
   <p>Directly enter new coordinates, click the map, or drag the map marker.</p>
 
-  <div class="'w-field-row">
-    <div class="w-panel__wrapper">
+  <div class="w-field-row">
+    <div class="w-field__wrapper">
       <label class='w-field__label text-black w-text-black' for="{{ name }}-mw-overlay-longitude">
         {% trans "Longitude:" %}
       </label>
@@ -32,7 +33,7 @@
       </div>
     </div>
 
-    <div class="field">
+    <div class="w-field__wrapper">
       <label class='w-field__label text-black w-text-black' for="{{ name }}-mw-overlay-latitude">
         {% trans "Latitude:" %}
       </label>
@@ -53,7 +54,7 @@
       </div>
     </div>
 
-    <div class="field">
+    <div class="w-field__wrapper">
       <div class="w-field">
         <a
           class="button button-secondary no"
