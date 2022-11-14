@@ -124,6 +124,10 @@ Stimulus.register("pointfield", class extends Controller {
 
     this.map.addControl(this.createGeocoder())
     this.map.addControl(this.createGeolocator())
+
+    setTimeout(() => {
+      this.map.resize()
+    }, 2000)
   }
 
   createGeocoder() {
