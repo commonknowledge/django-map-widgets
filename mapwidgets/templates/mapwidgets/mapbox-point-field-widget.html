@@ -17,19 +17,15 @@
         {% trans "Longitude:" %}
       </label>
       <div class="w-field">
-        <div class="w-field__input">
-          <div class="w-field__input">
-            <input
-              data-pointfield-target="lng"
-              type="number"
-              id="{{ name }}-mw-overlay-longitude"
-              placeholder="{% trans 'Number between -180 and 180' %}"
-              min="-180"
-              max="180"
-              data-action='change->pointfield#syncInputsToValues'
-            />
-          </div>
-        </div>
+        <input
+          data-pointfield-target="lng"
+          type="number"
+          id="{{ name }}-mw-overlay-longitude"
+          placeholder="{% trans 'Number between -180 and 180' %}"
+          min="-180"
+          max="180"
+          data-action='change->pointfield#syncInputsToValues'
+        />
       </div>
     </div>
 
@@ -38,19 +34,15 @@
         {% trans "Latitude:" %}
       </label>
       <div class="w-field">
-        <div class="w-field__input">
-          <div class="w-field__input">
-            <input
-              data-pointfield-target="lat"
-              type="number"
-              id="{{ name }}-mw-overlay-latitude"
-              placeholder="{% trans 'Number between -90 and 90' %}"
-              min="-90"
-              max="90"
-              data-action='change->pointfield#syncInputsToValues'
-            />
-          </div>
-        </div>
+        <input
+          data-pointfield-target="lat"
+          type="number"
+          id="{{ name }}-mw-overlay-latitude"
+          placeholder="{% trans 'Number between -90 and 90' %}"
+          min="-90"
+          max="90"
+          data-action='change->pointfield#syncInputsToValues'
+        />
       </div>
     </div>
   </div>
